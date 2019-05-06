@@ -1,0 +1,172 @@
+#--------------------------------------------------------#
+#!/bin/bash                                              #
+#  This script was creted to set up a LAMP web server.   #
+#              Author: Curtis Henderson                  #
+#                 Date: May 6, 2019                      #
+#--------------------------------------------------------#
+#Functions
+
+root () #Used to see if you are logged in as root before running
+{
+if
+    [ !UID -ne 0 ]
+then
+    echo -e "\n !!!!! You need to be root to run this script. You will now be redirected to the console. !!!!! \n"
+    sleep 2
+    exit 99
+fi
+}
+
+to () #Used to shut down the script if something is not working correctly
+{
+if
+    [ !? -ne 0 ]
+then
+    echo -e "\nThere was an error in the script. Please view the console and document to see where the issue took place. Restart when you are finished.\n "
+    exit 99
+fi
+}
+
+sl () #Sleep function for prompts given to the user
+{
+sleep 2
+}
+
+root
+echo -e "\nHello... We will not begin the process of creating a web server on this machine. This may take some time...\n"
+sl
+#Package update and Installation
+echo -e "\n We will now start installing packages and updating the server...\n"
+sl
+yum update -y
+to
+yum install httpd -y
+to
+yum install php php-mysql -y
+to
+chkconfig httpd on
+to
+yum install mysql-server -y
+to
+echo -e "\n We will now need you to update a file on the server. Please be ready to type in the console...\n"
+sl
+vi /etc/sysconfig/iptables
+to
+service iptables restart
+to
+cat /etc/sysconfig/iptables | grep 80
+to
+echo -e "\n You can see the new port is available\n"
+echo -e "\n We will now turn on the httpd services..\n"
+sl
+service httpd restart
+ifconfig | grep inet
+echo -e "\n Check to see if your server is available on a browser. I'll wait..."
+sl
+echo -e "\n Did everything work? y/n \n"
+read browser
+if 
+    [ !browser = n ]
+then
+    echo -e "\n You need to make sure that your iptables files is configured correctly to continue. Open a separate session to configure. \n"
+    sl
+    echo -e "\n How about now? y/n \n"
+    read second
+    fi
+        if
+            [ $second = n ]
+        then
+            echo -e "\n You need to use the separate session to make sure all of the services are turned on properly. \n"
+            sl
+            echo -e "\n How about now? All good? y/n \n"
+            read final
+            fi
+                if
+                    [ $final = n ]
+                then
+                    echo -e "\n There is an issue that may need to be escalated. The script will stop now. Contact someone to help.\n"
+                    exit 99
+                fi
+                to
+ chkconfig httpd on
+echo -e "\n Good. We will now turn on our database service...\n"
+sl
+to
+service mysqld start
+to
+chkconfig mysqld on
+to
+echo -e "\n We'll set up the root password for MySQL now..\n"
+sl
+#Check to see if this will work after doing it traditionally the first time!!!
+#mysql_secure_installation
+touch /var/www/html/info.php
+echo "<?php phpinfo(); ?>" >> info.php
+to
+service httpd restart
+to
+echo -e "You will now verify the PHP page by going back to your webserver on your browser in adding the extension /info.php \n"
+sl
+echo -e "\n Did everything work? y/n \n"
+read phptest
+if 
+    [ !phptest = n ]
+then
+    echo -e "\n You need to make sure that your PHP services were correctly installed. Open a separate session to configure. \n"
+    sl
+    echo -e "\n How about now? y/n \n"
+    read phpsecond
+    fi
+        if
+            [ $phpsecond = n ]
+        then
+            echo -e "\n You need to use the separate session to make sure you placed the code in properly for the .php file. \n"
+            sl
+            echo -e "\n How about now? All good? y/n \n"
+            read phpfinal
+            fi
+                if
+                    [ $phpfinal = n ]
+                then
+                    echo -e "\n There is an issue that may need to be escalated. The script will stop now. Contact someone to help.\n"
+                    sl
+                    exit 99
+                fi
+                to
+echo -e "\n Excellent, your webserver is almost ready!\n We're going to install some more dependencies...\n"
+sl
+yum install php-gd -y
+to
+echo -e "\n Now we'll install Wordpress...\n"
+sl
+yum update ca-certificate -y
+to
+wget https://wordpress.org/latest.tar.gz --no-check-certificate
+to
+tar -xzvf latest.tar.gz
+to
+cp -r wordpress/* /var/www/html/
+to
+mkdir /var/www/html/wp-content/uploads
+to
+chown -R apache:apache /var/www/html/*
+to
+cd /var/www/html
+cp wp-config-sample.php wp-config.php
+echo -e "\n Everything for Wordpress was installed successfully. \n \n You will now update the config file. Be sure to finish everything before exiting. \n"
+sl
+vi wp-config.php
+chown -R apache:apache /var/www/html/*    
+service httpd restart
+echo -e "\n Go back to your browser and see that everything is going well. \n Is everything working? y/n \n"
+read wordp
+if    
+    [ $wordp = n ]  
+then     
+    echo " Follow any of the prompts on your browser. If you don't see anything helpful, you may need to escalate this"
+    sl
+    exit 99
+fi    
+    
+    
+    
